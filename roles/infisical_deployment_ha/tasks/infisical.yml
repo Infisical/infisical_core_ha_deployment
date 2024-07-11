@@ -1,0 +1,110 @@
+---
+- name: Wait for propagation
+  pause:
+    seconds: 60
+
+- name: Retrieve PostgreSQL facts
+  set_fact:
+    postgres_username: "{{ hostvars[groups['postgres'][0]]['postgres_username'] | default('') }}"
+    postgres_password: "{{ hostvars[groups['postgres'][0]]['postgres_password'] | default('') }}"
+    postgres_db_name: "{{ hostvars[groups['postgres'][0]]['postgres_db_name'] | default('') }}"
+
+- name: Retrieve HAProxy host IP
+  set_fact:
+    haproxy_host: "{{ hostvars[groups['haproxy'][0]]['haproxy_host'] | default('') }}"
+
+# Create directory if not already present
+- name: Create Infisical configuration directory
+  file:
+    path: /etc/infisical
+    state: directory
+    mode: "0755"
+
+# Create environment if not already present
+- name: Create Infisical environment file
+  file:
+    path: /etc/infisical/environment
+    state: touch
+    mode: "0600"
+
+- name: Get existing ENCRYPTION_KEY if file exists
+  shell: grep '^ENCRYPTION_KEY=' /etc/infisical/environment | cut -d '=' -f2
+  register: existing_encryption_key_result
+  changed_when: false
+
+- name: Get existing AUTH_SECRET if file exists
+  shell: grep '^AUTH_SECRET=' /etc/infisical/environment | cut -d '=' -f2
+  register: existing_auth_secret_result
+  changed_when: false
+
+- name: Create Infisical environment file from template
+  template:
+    src: templates/infisical_environment.j2
+    dest: /etc/infisical/environment
+    mode: "0600"
+  vars:
+    existing_encryption_key: "{{ existing_encryption_key_result.stdout | default('') }}"
+    existing_auth_secret: "{{ existing_auth_secret_result.stdout | default('') }}"
+    postgres_connection_uri: postgres://{{ postgres_username }}:{{ postgres_password }}@{{ haproxy_host }}:5000/{{ postgres_db_name }}
+
+- name: Configure user-passed environment variables
+  lineinfile:
+    path: /etc/infisical/environment
+    regexp: "^#?{{ item.key }}="
+    line: "{{ item.key }}={{ item.value }}"
+    state: present
+  loop: "{{ env_vars | dict2items }}"
+
+- name: Create wrapper script for running custom env
+  template:
+    src: templates/run_with_env.sh
+    dest: /usr/local/bin/run_with_env
+    mode: "0755"
+
+- name: Install Infisical from .deb package
+  ansible.builtin.shell:
+    cmd: curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-core/cfg/setup/bash.deb.sh' | sudo bash && sudo apt-get install -y infisical-core
+  args:
+    executable: /bin/bash
+  become: true
+
+# During the setup, we need to run the migrations
+- name: Execute Postgres migrations
+  shell: |
+    source /etc/infisical/environment
+    /usr/local/bin/run_with_env infisical-core migration:latest
+  args:
+    executable: /bin/bash
+  register: migration_result
+  changed_when: migration_result.rc == 0
+  failed_when: migration_result.rc != 0
+
+# Create a system demon for Infisical
+- name: Create Infisical systemd service file
+  template:
+    src: templates/infisical.service.j2
+    dest: /etc/systemd/system/infisical.service
+  notify: Reload systemd
+
+# Start and enable the service
+- name: Ensure Infisical service is enabled and started
+  systemd:
+    name: infisical
+    enabled: yes
+    state: started
+
+# Restart the service just to make sure we got the latest state possible
+- name: Restart Infisical service
+  systemd:
+    name: infisical
+    state: restarted
+
+- name: Open firewall ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "80"
+    - "8080"
+  become: true
