@@ -12,6 +12,3 @@ postgres_hosts:
   - "postgres-1"
   - "postgres-2"
   - "postgres-3"
-
-redis_password: "123456"
-postgres_password: "postgres"
