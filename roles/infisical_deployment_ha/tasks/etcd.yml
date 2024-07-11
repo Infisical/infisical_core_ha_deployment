@@ -7,6 +7,13 @@
     update_cache: yes
   become: true
 
+# Undocumented, but needed to reset the nodes etcd state.
+- name: Clear existing etcd data
+  shell: |
+    sudo rm -rf /var/lib/etcd2/*
+    sudo rm -f /etc/systemd/system/etcd*
+  become: true
+
 - name: Download and install etcd
   block:
     - name: Download etcd
