@@ -1,0 +1,98 @@
+---
+- name: Install etcd dependencies
+  apt:
+    name:
+      - python3-pip
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Download and install etcd
+  block:
+    - name: Download etcd
+      get_url:
+        url: "https://github.com/etcd-io/etcd/releases/download/v3.5.1/etcd-v3.5.1-linux-amd64.tar.gz"
+        dest: "/tmp/etcd.tar.gz"
+      become: true
+
+    - name: Extract etcd
+      unarchive:
+        src: "/tmp/etcd.tar.gz"
+        dest: "/tmp"
+        remote_src: yes
+      become: true
+
+    - name: Move etcd binaries to /usr/local/bin
+      copy:
+        src: "/tmp/etcd-v3.5.1-linux-amd64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: "0755"
+        remote_src: yes
+      loop:
+        - etcd
+        - etcdctl
+      become: true
+
+- name: Create etcd system user
+  user:
+    name: etcd
+    system: yes
+    create_home: no
+  become: true
+
+- name: Create etcd data directory
+  file:
+    path: /var/lib/etcd
+    state: directory
+    owner: etcd
+    group: etcd
+    mode: "0755"
+  become: true
+
+- name: Create etcd systemd service file
+  template:
+    src: etcd.service.j2
+    dest: /etc/systemd/system/etcd.service
+    mode: "0644"
+  become: true
+  notify: Restart etcd
+
+- name: Open etcd ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "2379"
+    - "2380"
+  become: true
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: Start and enable etcd service
+  systemd:
+    name: etcd
+    state: started
+    enabled: yes
+  become: true
+
+- name: Wait for etcd to be ready
+  wait_for:
+    host: "{{ ansible_default_ipv4.address }}"
+    port: 2379
+    state: started
+    timeout: 300
+
+- name: Check etcd cluster status
+  shell: "etcdctl endpoint health --endpoints={{ ansible_default_ipv4.address }}:2379"
+  register: etcd_health
+  changed_when: false
+  become: true
+  ignore_errors: true
+
+- name: Display etcd cluster status
+  debug:
+    var: etcd_health.stdout_lines
