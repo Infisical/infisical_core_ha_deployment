@@ -1,15 +1,14 @@
+---
 scope: postgres_cluster
 name: {{ inventory_hostname }}
+namespace: /service/
 
 restapi:
-  listen: 0.0.0.0:8008
+  listen: {{ ansible_default_ipv4.address }}:8008
   connect_address: {{ ansible_default_ipv4.address }}:8008
 
 etcd3:
-  hosts: {{ groups['postgres'] | map('extract', hostvars, 'ansible_default_ipv4') | map(attribute='address') | join(':2379,') }}:2379
-  
-  protocol: http
-
+  hosts: {{ etcd_hosts }}
 
 bootstrap:
   dcs:
@@ -19,17 +18,22 @@ bootstrap:
     maximum_lag_on_failover: 1048576
     postgresql:
       use_pg_rewind: true
-
+      parameters:
+        max_connections: 100
+        shared_buffers: 16MB
   initdb:
     - encoding: UTF8
     - data-checksums
 
   pg_hba:
-    - host replication replicator 0.0.0/0 md5
-    - host all all 0.0.0/0 md5
+    - host replication replicator 0.0.0.0/0 md5
+    - local all all peer
+    - host all all 127.0.0.1/32 md5
+    - host all all 0.0.0.0/0 md5
+    - host all all ::1/128 md5
 
 postgresql:
-  listen: 0.0.0.0:5432
+  listen: {{ ansible_default_ipv4.address }}:5432
   connect_address: {{ ansible_default_ipv4.address }}:5432
   data_dir: /var/lib/postgresql/16/main
   bin_dir: /usr/lib/postgresql/16/bin
@@ -37,12 +41,12 @@ postgresql:
   authentication:
     replication:
       username: replicator
-      password: replicator_pass
+      password: replicator_password
     superuser:
       username: postgres
-      password: postgres_pass
+      password: postgres_password
   parameters:
-    unix_socket_directories: '.'
+    unix_socket_directories: '/var/run/postgresql'
 
 tags:
     nofailover: false
