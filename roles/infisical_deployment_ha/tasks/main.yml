@@ -2,17 +2,22 @@
 - name: Include variables
   include_vars: main.yml
 
-- name: Include HAProxy tasks
-  include_tasks: haproxy.yml
-  when: inventory_hostname in groups['haproxy']
+- name: Include etcd tasks
+  include_tasks: etcd.yml
+  when: inventory_hostname in groups['etcd'] and setup_etcd | default(false)
 
 - name: Include PostgreSQL tasks
   include_tasks: postgres.yml
-  when: inventory_hostname in groups['postgres']
+  when: inventory_hostname in groups['postgres'] and setup_postgres | default(false)
+
+- name: Include HAProxy tasks
+  include_tasks: haproxy.yml
+  when: inventory_hostname in groups['haproxy'] and setup_haproxy | default(false)
 
 - name: Fail if no matching tasks are found
   fail:
     msg: "No tasks file found for host {{ inventory_hostname }}"
   when:
-    - inventory_hostname not in groups['haproxy']
-    - inventory_hostname not in groups['postgres']
+    - inventory_hostname not in groups['etcd'] or not setup_etcd | default(false)
+    - inventory_hostname not in groups['postgres'] or not setup_postgres | default(false)
+    - inventory_hostname not in groups['haproxy'] or not setup_haproxy | default(false)
