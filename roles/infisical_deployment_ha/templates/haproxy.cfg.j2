@@ -50,3 +50,14 @@ backend postgres_replicas
     {% for host in postgres_servers %}
     server {{ host }} {{ hostvars[host]['ansible_host'] }}:5432 check port 8008
     {% endfor %}
+
+frontend infisical_frontend
+  bind *:8080
+  default_backend infisical_backend
+
+backend infisical_backend
+  option httpchk GET /api/status
+  http-check expect status 200
+  {% for host in infisical_servers %}
+  server {{ host }} {{ hostvars[host]['ansible_host'] }}:8080 check inter 1s
+  {% endfor %}
