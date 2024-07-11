@@ -41,10 +41,10 @@ postgresql:
   authentication:
     replication:
       username: replicator
-      password: replicator_password
+      password: {{ postgres_replicator_password }}
     superuser:
       username: postgres
-      password: postgres_password
+      password: {{ postgres_super_user_password }}
   parameters:
     unix_socket_directories: '/var/run/postgresql'
 
