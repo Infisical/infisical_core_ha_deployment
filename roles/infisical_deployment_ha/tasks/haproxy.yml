@@ -64,7 +64,7 @@
 
 - name: Check HAProxy status
   uri:
-    url: "http://localhost:{{ haproxy_stats_port }}/haproxy?stats"
+    url: "http://{{ ansible_default_ipv4.address }}:{{ haproxy_stats_port }}/haproxy?stats"
     method: GET
     user: admin
     password: admin
@@ -85,3 +85,13 @@
 - name: Display HAProxy status
   debug:
     var: haproxy_status.status
+
+- name: Set HAProxy host IP fact
+  set_fact:
+    haproxy_host: "{{ ansible_default_ipv4.address }}"
+
+- name: Add HAProxy host IP details to host facts
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: haproxy
+    haproxy_host: "{{ haproxy_host }}"
