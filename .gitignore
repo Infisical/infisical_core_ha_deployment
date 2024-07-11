@@ -1,4 +1,4 @@
 /.venv/**
-invetory.ini
+inventory.ini
 playbook.yml
 *.pem

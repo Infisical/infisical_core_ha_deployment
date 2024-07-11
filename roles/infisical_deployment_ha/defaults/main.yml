@@ -1,0 +1,17 @@
+---
+infisical_version: "0.60.1"
+infisical_binary_url: "https://infisical.com/deps/infisical-binary"
+haproxy_version: "2.4"
+
+etcd_hosts:
+  - "etcd1"
+  - "etcd2"
+  - "etcd3"
+
+postgres_hosts:
+  - "postgres-1"
+  - "postgres-2"
+  - "postgres-3"
+
+redis_password: "123456"
+postgres_password: "postgres"

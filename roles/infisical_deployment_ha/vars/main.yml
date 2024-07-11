@@ -1,0 +1,4 @@
+---
+# vars file for infisical_deployment_ha
+
+haproxy_stats_port: 7000
