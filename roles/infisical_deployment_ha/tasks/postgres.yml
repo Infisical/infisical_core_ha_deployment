@@ -178,7 +178,7 @@
       postgresql_user:
         name: "{{ postgres_user }}"
         password: "{{ postgres_user_password }}"
-        role_attr_flags: CREATEDB,LOGIN
+        role_attr_flags: CREATEDB,LOGIN,SUPERUSER
         db: "{{ postgres_db_name }}"
       become: true
       become_user: postgres
