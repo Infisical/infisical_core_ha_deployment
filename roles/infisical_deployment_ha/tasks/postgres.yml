@@ -11,6 +11,30 @@
     update_cache: yes
   become: true
 
+- name: Create Infisical configuration directory
+  file:
+    path: /etc/infisical
+    state: directory
+    mode: "0755"
+
+- name: Copy password generation script
+  template:
+    src: templates/replicator_password.sh
+    dest: /etc/infisical/replicator_password.sh
+    mode: "0700"
+  become: true
+
+- name: Generate replicator password
+  command: >
+    /etc/infisical/replicator_password.sh 
+    "{{ postgres_super_user_password }}-{{ postgres_db_name }}-{{ postgres_user }}-{{ postgres_user_password }}"
+  register: replicator_password_output
+  become: true
+
+- name: Set replicator password fact
+  set_fact:
+    postgres_replicator_password: "{{ replicator_password_output.stdout }}"
+
 - name: Install virtualenv
   apt:
     name: python3-venv
@@ -31,16 +55,6 @@
     state: present
     virtualenv: /opt/patroni_venv
   become: true
-
-- name: Check etcd cluster health
-  shell: "etcdctl endpoint health --endpoints={{ etcd_hosts }}"
-  register: etcd_health
-  changed_when: false
-  ignore_errors: true
-
-- name: Display etcd health
-  debug:
-    var: etcd_health.stdout_lines
 
 - name: Ensure PostgreSQL is stopped and disabled
   systemd:
@@ -67,7 +81,7 @@
 
 - name: Create Patroni configuration
   template:
-    src: patroni.yml.j2
+    src: templates/patroni.yml.j2
     dest: /etc/patroni.yml
     owner: postgres
     group: postgres
@@ -178,3 +192,17 @@
       become: true
       become_user: postgres
   when: leader_check.status == 200
+
+- name: Set PostgreSQL connection details facts
+  set_fact:
+    postgres_username: "{{ postgres_user }}"
+    postgres_password: "{{ postgres_user_password | urlencode }}"
+    postgres_db_name: "{{ postgres_db_name }}"
+
+- name: Add PostgreSQL details to host facts
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: postgres
+    postgres_username: "{{ postgres_username }}"
+    postgres_password: "{{ postgres_password }}"
+    postgres_db_name: "{{ postgres_db_name }}"
