@@ -9,8 +9,8 @@ Group=postgres
 ExecStart=/opt/patroni_venv/bin/patroni /etc/patroni.yml
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=process
-TimeoutSec=30
 Restart=always
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
