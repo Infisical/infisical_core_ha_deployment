@@ -1,0 +1,14 @@
+[Unit]
+Description=Infisical Service
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/infisical/environment
+Type=simple
+User=root
+ExecStart=/usr/local/bin/infisical-core
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
