@@ -23,7 +23,7 @@ frontend stats
     stats enable
     stats uri /haproxy?stats
     stats refresh 10s
-    stats auth admin:admin  # Added authentication with admin/admin
+    stats auth {{ stats_user }}:{{ stats_password }}  # Added authentication with admin/admin
 
 frontend postgres_write
     bind *:5000
@@ -52,12 +52,12 @@ backend postgres_replicas
     {% endfor %}
 
 frontend infisical_frontend
-  bind *:8080
+  bind *:80
   default_backend infisical_backend
 
 backend infisical_backend
   option httpchk GET /api/status
   http-check expect status 200
   {% for host in infisical_servers %}
-  server {{ host }} {{ hostvars[host]['ansible_host'] }}:8080 check inter 1s
+  server {{ host }} {{ hostvars[host]['ansible_host'] }}:8085 check inter 1s
   {% endfor %}

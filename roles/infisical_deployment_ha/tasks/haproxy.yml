@@ -32,7 +32,7 @@
 
 - name: Configure HAProxy
   template:
-    src: templates/haproxy.cfg.j2
+    src: templates/haproxy.main.cfg.j2
     dest: /etc/haproxy/haproxy.cfg
     mode: "0644"
   become: true

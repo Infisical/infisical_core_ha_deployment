@@ -99,6 +99,27 @@
     name: infisical
     state: restarted
 
+- name: Install HAProxy
+  apt:
+    name: haproxy
+    state: present
+    update_cache: yes
+
+- name: Configure HAProxy
+  template:
+    src: templates/haproxy.infisical.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+  notify: Reload HAProxy
+
+- name: Format HAProxy configuration
+  shell: echo "" >> /etc/haproxy/haproxy.cfg
+
+- name: Ensure HAProxy service is enabled and started
+  systemd:
+    name: haproxy
+    enabled: yes
+    state: started
+
 - name: Open firewall ports
   ufw:
     rule: allow
@@ -107,4 +128,5 @@
   loop:
     - "80"
     - "8080"
+    - "8085"
   become: true
