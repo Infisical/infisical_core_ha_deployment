@@ -1,0 +1,14 @@
+port {{ redis_port }}
+bind 0.0.0.0
+requirepass {{ redis_password }}
+masterauth {{ redis_password }}
+{% if not (is_master | default(false) | bool) %}
+slaveof {{ redis_master_ip }} {{ redis_port }}
+{% endif %}
+replica-read-only no
+min-replicas-to-write 0
+min-replicas-max-lag 10
+replica-serve-stale-data yes
+replica-priority 100
+dir /var/lib/redis
+stop-writes-on-bgsave-error no
