@@ -1,0 +1,109 @@
+---
+- name: Install dependencies
+  apt:
+    name:
+      - python3-psycopg2
+      - build-essential
+      - libpq-dev
+      - libssl-dev
+      - openssl
+      - libffi-dev
+      - zlib1g-dev
+      - haproxy
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Retrieve Redis password
+  set_fact:
+    redis_password: "{{ hostvars[item]['redis_password'] }}"
+  loop: "{{ groups['redis'] }}"
+  when:
+    - hostvars[item]['redis_password'] is defined
+    - hostvars[item]['redis_password'] | length > 0
+  vars:
+    redis_password: ""
+
+- name: Open ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "7000"
+    - "4000"
+    - "8080"
+  become: true
+
+- name: Create HAProxy configuration directory
+  file:
+    path: /etc/haproxy
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Configure HAProxy
+  template:
+    src: templates/haproxy.main.cfg.j2
+    dest: /etc/haproxy/haproxy.cfg
+    mode: "0644"
+  become: true
+  notify: Restart HAProxy
+
+- name: Format HAProxy configuration
+  shell: echo "" >> /etc/haproxy/haproxy.cfg
+
+- name: Enable HAProxy init script
+  file:
+    path: /etc/default/haproxy
+    state: touch
+    mode: "0644"
+  become: true
+
+- name: Configure HAProxy to be enabled
+  lineinfile:
+    path: /etc/default/haproxy
+    line: "ENABLED=1"
+    regexp: "^ENABLED="
+  become: true
+
+- name: Start and enable HAProxy service
+  systemd:
+    name: haproxy
+    state: started
+    enabled: yes
+  become: true
+
+- name: Check HAProxy status
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:{{ haproxy_stats_port }}/haproxy?stats"
+    method: GET
+    user: admin
+    password: admin
+    force_basic_auth: yes
+    return_content: yes
+    status_code: 200
+  register: haproxy_status
+  ignore_errors: true
+
+- name: Display detailed HAProxy status
+  debug:
+    msg:
+      - "Status code: {{ haproxy_status.status }}"
+      - "Content type: {{ haproxy_status.content_type }}"
+      - "Content (first 500 characters): {{ haproxy_status.content[:500] | default('No content') }}"
+  when: haproxy_status is success
+
+- name: Display HAProxy status
+  debug:
+    var: haproxy_status.status
+
+- name: Set HAProxy host IP fact
+  set_fact:
+    haproxy_host: "{{ ansible_default_ipv4.address }}"
+
+- name: Add HAProxy host IP details to host facts
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: haproxy
+    haproxy_host: "{{ haproxy_host }}"
