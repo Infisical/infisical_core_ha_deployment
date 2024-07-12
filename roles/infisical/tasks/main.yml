@@ -1,5 +1,5 @@
 ---
-- name: Install etcd dependencies
+- name: Install Infisical dependencies
   apt:
     name:
       - build-essential

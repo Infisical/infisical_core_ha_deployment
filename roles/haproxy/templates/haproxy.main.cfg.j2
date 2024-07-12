@@ -59,7 +59,7 @@ backend infisical_backend
   option httpchk GET /api/status
   http-check expect status 200
   {% for host in infisical_servers %}
-  server {{ host }} {{ hostvars[host]['ansible_host'] }}:8085 check inter 1s
+  server {{ host }} {{ hostvars[host]['ansible_host'] }}:8085 check inter 500
   {% endfor %}
   
   frontend redis_master_frontend
