@@ -1,0 +1,42 @@
+---
+- name: Install Redis Sentinel
+  apt:
+    name: redis-sentinel
+    update_cache: true
+    state: present
+
+- name: Ensure Redis Sentinel directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: redis
+    group: redis
+    mode: "0755"
+  loop:
+    - /var/run/redis
+    - /var/log/redis
+
+- name: Open ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "26379"
+    - "6379"
+  become: true
+
+- name: Configure Sentinel
+  template:
+    src: sentinel.conf.j2
+    dest: /etc/redis/sentinel.conf
+    owner: redis
+    group: redis
+    mode: "0644"
+  notify: Restart Sentinel
+
+- name: Ensure Sentinel is running and enabled
+  systemd:
+    name: redis-sentinel
+    state: started
+    enabled: yes
