@@ -1,0 +1,11 @@
+---
+- name: Reload HAProxy
+  systemd:
+    name: haproxy
+    state: reloaded
+  become: true
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  become: true
