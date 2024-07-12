@@ -1,0 +1,59 @@
+---
+- name: Identify master
+  debug:
+    msg: "IP {{ansible_default_ipv4.address}}, is master: {{ is_master }}"
+
+- name: Install Redis
+  apt:
+    name: redis-server
+    state: present
+    update_cache: true
+
+- name: Open ports
+  ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "26379"
+    - "6379"
+  become: true
+
+- name: Ensure Redis data directory exists
+  file:
+    path: /var/lib/redis
+    state: directory
+    owner: redis
+    group: redis
+    mode: "0755"
+
+- name: Ensure Redis has write permissions
+  file:
+    path: /var/lib/redis
+    state: directory
+    owner: redis
+    group: redis
+    mode: "0755"
+    recurse: yes
+
+- name: Configure Redis
+  template:
+    src: templates/redis.conf.j2
+    dest: /etc/redis/redis.conf
+  notify: Restart Redis
+
+- name: Ensure Redis is running and enabled
+  systemd:
+    name: redis-server
+    state: started
+    enabled: yes
+
+- name: Set Redis connection details facts
+  set_fact:
+    redis_password: "{{ redis_password }}"
+
+- name: Add Redis details to host facts
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: redis
+    redis_password: "{{ redis_password }}"
