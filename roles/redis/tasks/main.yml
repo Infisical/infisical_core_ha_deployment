@@ -1,0 +1,16 @@
+---
+- name: Set Redis master IP
+  set_fact:
+    redis_master_ip: "{{ hostvars[item]['ansible_host'] }}"
+  loop: "{{ groups['redis'] }}"
+  when: hostvars[item]['is_master'] | default(false) | bool
+  run_once: true
+
+- name: Share Redis master IP
+  set_fact:
+    redis_master_ip: "{{ redis_master_ip }}"
+
+- import_tasks: redis.yml
+  when: inventory_hostname in groups['redis']
+- import_tasks: sentinel.yml
+  when: inventory_hostname in groups['sentinel']
