@@ -39,7 +39,7 @@ backend postgres_master
     http-check expect status 200
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     {% for host in postgres_servers %}
-    server {{ host }} {{ hostvars[host]['private_ip'] | default(hostvars[host]['ansible_host']) }}:5432 check port 8008 # THIS LINE!!!!!
+    server {{ host }} {{ hostvars[host]['ansible_default_ipv4']['address'] }}:5432 check port 8008
     {% endfor %}
 
 backend postgres_replicas
@@ -48,7 +48,7 @@ backend postgres_replicas
     http-check expect status 200
     default-server inter 3s fall 3 rise 2 on-marked-down shutdown-sessions
     {% for host in postgres_servers %}
-    server {{ host }} {{ hostvars[host]['private_ip'] | default(hostvars[host]['ansible_host']) }}:5432 check port 8008
+    server {{ host }} {{ hostvars[host]['ansible_default_ipv4']['address'] }}:5432 check port 8008
     {% endfor %}
 
 frontend infisical_frontend
@@ -59,7 +59,7 @@ backend infisical_backend
   option httpchk GET /api/status
   http-check expect status 200
   {% for host in infisical_servers %}
-  server {{ host }} {{ hostvars[host]['private_ip'] | default(hostvars[host]['ansible_host']) }}:8085 check inter 500
+  server {{ host }} {{ hostvars[host]['ansible_default_ipv4']['address'] }}:8085 check inter 500
   {% endfor %}
   
   frontend redis_master_frontend
@@ -77,5 +77,5 @@ backend redis_master_backend
   tcp-check send QUIT\r\n
   tcp-check expect string +OK
   {% for host in groups['redis'] %}
-  server redis{{ loop.index }} {{ hostvars[host]['private_ip'] | default(hostvars[host]['ansible_host'])  }}:6379 check inter 1s
+  server redis{{ loop.index }} {{ hostvars[host]['ansible_default_ipv4']['address']  }}:6379 check inter 1s
   {% endfor %}

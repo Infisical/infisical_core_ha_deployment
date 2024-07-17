@@ -1,4 +1,9 @@
 ---
+# - name: Get IP address of another host
+#   debug:
+#     msg: "The IP address of {{ other_host }} is {{ hostvars[other_host]['ansible_default_ipv4']['address'] }}"
+#   vars:
+#     other_host: "postgres1"
 - name: Install etcd dependencies
   apt:
     name:
@@ -18,10 +23,6 @@
     sudo rm -rf /var/lib/etcd2/*
     sudo rm -f /etc/systemd/system/etcd*
   become: true
-
-- name: Set network_ip fact
-  set_fact:
-    network_ip: "{{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}"
 
 - name: Download and install etcd
   block:

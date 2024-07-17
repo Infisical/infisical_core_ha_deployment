@@ -1,9 +1,8 @@
 ---
 - name: Set Redis master IP
   set_fact:
-    redis_master_ip: "{{ network_ip }}"
-  loop: "{{ groups['redis'] }}"
-  when: hostvars[item]['is_master'] | default(false) | bool
+    redis_master_ip: "{{ ansible_default_ipv4.address }}"
+  when: inventory_hostname == groups['redis'][0]
   run_once: true
 
 - name: Share Redis master IP

@@ -98,7 +98,7 @@
 
 - name: Execute Postgres migrations on primary instance
   shell: |
-    source /etc/infisical/environment /usr/local/bin/run_with_env infisical-core migration:latest
+    /usr/local/bin/run_with_env infisical-core migration:latest
   args:
     executable: /bin/bash
   register: migration_result

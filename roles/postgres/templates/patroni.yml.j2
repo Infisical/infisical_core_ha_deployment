@@ -4,8 +4,8 @@ name: {{ inventory_hostname }}
 namespace: /service/
 
 restapi:
-  listen: {{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}:8008
-  connect_address: {{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}:8008
+  listen: {{ ansible_default_ipv4.address }}:8008
+  connect_address: {{ ansible_default_ipv4.address }}:8008
 
 etcd3:
   hosts: {{ etcd_hosts }}
@@ -33,8 +33,8 @@ bootstrap:
     - host all all ::1/128 md5
 
 postgresql:
-  listen: {{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}:5432
-  connect_address: {{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}:5432
+  listen: {{ ansible_default_ipv4.address }}:5432
+  connect_address: {{ ansible_default_ipv4.address }}:5432
   data_dir: /var/lib/postgresql/16/main
   bin_dir: /usr/lib/postgresql/16/bin
   pgpass: /tmp/pgpass
