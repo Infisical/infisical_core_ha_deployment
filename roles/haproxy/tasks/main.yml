@@ -76,10 +76,10 @@
 
 - name: Check HAProxy status
   uri:
-    url: "http://{{ ansible_default_ipv4.address }}:{{ haproxy_stats_port }}/haproxy?stats"
+    url: "http://{{  hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address) }}:{{ haproxy_stats_port }}/haproxy?stats"
     method: GET
-    user: admin
-    password: admin
+    user: "{{ stats_user }}"
+    password: "{{ stats_password }}"
     force_basic_auth: yes
     return_content: yes
     status_code: 200
@@ -92,6 +92,7 @@
       - "Status code: {{ haproxy_status.status }}"
       - "Content type: {{ haproxy_status.content_type }}"
       - "Content (first 500 characters): {{ haproxy_status.content[:500] | default('No content') }}"
+      - "You can now view your HAProxy dashboard at: http://{{ hostvars[inventory_hostname]['ansible_host'] }}"
   when: haproxy_status is success
 
 - name: Display HAProxy status
@@ -100,7 +101,7 @@
 
 - name: Set HAProxy host IP fact
   set_fact:
-    haproxy_host: "{{ ansible_default_ipv4.address }}"
+    haproxy_host: "{{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address) }}"
 
 - name: Add HAProxy host IP details to host facts
   add_host:
