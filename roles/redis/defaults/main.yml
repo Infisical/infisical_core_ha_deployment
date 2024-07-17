@@ -3,3 +3,4 @@ is_master: false
 
 redis_port: 6379
 sentinel_port: 26379
+network_ip: "{{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}"
