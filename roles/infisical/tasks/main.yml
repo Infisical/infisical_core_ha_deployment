@@ -92,16 +92,19 @@
     executable: /bin/bash
   become: true
 
-# During the setup, we need to run the migrations
-- name: Execute Postgres migrations
+- name: Set facts for migration
+  set_fact:
+    is_migration_instance: "{{ inventory_hostname == groups['infisical'][0] }}"
+
+- name: Execute Postgres migrations on primary instance
   shell: |
-    source /etc/infisical/environment
-    /usr/local/bin/run_with_env infisical-core migration:latest
+    source /etc/infisical/environment /usr/local/bin/run_with_env infisical-core migration:latest
   args:
     executable: /bin/bash
   register: migration_result
   changed_when: migration_result.rc == 0
   failed_when: migration_result.rc != 0
+  when: is_migration_instance
 
 # Create a system demon for Infisical
 - name: Create Infisical systemd service file
