@@ -1,7 +1,7 @@
 ---
 - name: Set Redis master IP
   set_fact:
-    redis_master_ip: "{{ hostvars[item]['ansible_host'] }}"
+    redis_master_ip: "{{ network_ip }}"
   loop: "{{ groups['redis'] }}"
   when: hostvars[item]['is_master'] | default(false) | bool
   run_once: true
