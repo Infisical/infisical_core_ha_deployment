@@ -1,4 +1,5 @@
 /.venv/**
 inventory.ini
 playbook.yml
+ansible.cfg
 *.pem
