@@ -1,7 +1,7 @@
 ---
 - name: Identify master
   debug:
-    msg: "IP {{ansible_default_ipv4.address}}, is master: {{ is_master }}"
+    msg: "IP {{ network_ip }}, is master: {{ is_master }}"
 
 - name: Install Redis
   apt:
