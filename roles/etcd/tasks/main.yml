@@ -19,6 +19,10 @@
     sudo rm -f /etc/systemd/system/etcd*
   become: true
 
+- name: Set network_ip fact
+  set_fact:
+    network_ip: "{{ hostvars[inventory_hostname]['private_ip'] | default(ansible_default_ipv4.address, true) }}"
+
 - name: Download and install etcd
   block:
     - name: Download etcd
