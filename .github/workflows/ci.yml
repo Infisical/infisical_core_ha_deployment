@@ -1,20 +1,20 @@
 ---
-name: publish
+name: Deploy Collection
 
 on:
     release:
-        types: [published]
+        types:
+            - published
 
 jobs:
-    publish:
-        runs-on: ubuntu-22.04
+    deploy:
+        runs-on: ubuntu-latest
         steps:
-            - name: checkout
-              uses: actions/checkout@v4
-            - name: publish role
-              run: |
-                  REPOSITORY_NAME=$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f2)
-                  GITHUB_REPOSITORY_OWNER_LOWERCASE=$(echo ${GITHUB_REPOSITORY_OWNER} | tr '[:upper:]' '[:lower:]')
-                  ansible-galaxy role import --token ${ANSIBLE_GALAXY_API_KEY} --branch ${GITHUB_REF_NAME} ${GITHUB_REPOSITORY_OWNER_LOWERCASE} ${REPOSITORY_NAME}
-              env:
-                  ANSIBLE_GALAXY_API_KEY: ${{ secrets.GALAXY_TOKEN }}
+            - uses: actions/checkout@v3
+            - name: Get the version name from the tags
+              run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+            - name: Build and Deploy Collection
+              uses: artis3n/ansible_galaxy_collection@v2
+              with:
+                  api_key: "${{ secrets.GALAXY_TOKEN }}"
+                  galaxy_version: "${{ env.RELEASE_VERSION }}"

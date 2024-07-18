@@ -1,0 +1,30 @@
+namespace: infisical
+
+name: infisical_core_ha_deployment
+
+version: 1.1.0
+
+readme: README.md
+
+authors:
+  - Daniel Hougaard <daniel@infisical.com>
+
+description: Deploy Infisical with a highly available environment in a matter of minutes.
+
+license_file: LICENSE
+
+tags:
+  - infisical
+  - postgresql
+  - redis
+  - deployment
+
+dependencies: {}
+
+repository: https://github.com/infisical/infisical_core_ha_deployment
+
+documentation: https://infisical.com/docs
+
+homepage: https://infisical.com
+
+issues: https://github.com/infisical/infisical_core_ha_deployment/issues
