@@ -3,6 +3,7 @@ galaxy_info:
   description: Deploy Infisical with a highly available environment in a matter of minutes.
   company: Infisical
   namespace: infisical
+  role_name: infisical_core_deployment_ha
 
   license: MIT
 
