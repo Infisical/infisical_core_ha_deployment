@@ -11,6 +11,7 @@
       - libpq-dev
       - libssl-dev
       - openssl
+      - acl
       - libffi-dev
       - zlib1g-dev
     state: present
